@@ -5,13 +5,21 @@ package com.example.learningnumbers
 import android.content.Context
 import android.content.res.Configuration
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
@@ -24,7 +32,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -43,6 +53,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.learningnumbers.ui.theme.BackGroundGradientEnd
 import com.example.learningnumbers.ui.theme.BackGroundGradientStart
+import com.example.learningnumbers.ui.theme.List_color_dark
 import com.example.learningnumbers.ui.theme.Purple40
 import java.util.Locale
 
@@ -55,6 +66,7 @@ fun LearningView(navController: NavController, numbers: List<Int>, locale: Local
     val currentNumber = numbers.elementAtOrNull(currentNumberIndex)
     val sortedNumbers = numbers.sorted()
     val textRange = IntRange(sortedNumbers.first(), sortedNumbers.last()).toString()
+    var speedRate by remember { mutableFloatStateOf(1.0f) }
 
     Scaffold(
         topBar = {
@@ -99,10 +111,11 @@ fun LearningView(navController: NavController, numbers: List<Int>, locale: Local
             )
 
             if (currentNumber != null && currentNumberIndex < numbers.count()) {
+                Spacer(modifier = Modifier.padding(24.dp))
                 ListenButton(
                     context = ctx,
                     currentNumber.toString(),
-                    locale, 1.0f,
+                    locale, speedRate,
                     ttsViewModel = TtsViewModel(),
                     onListenDone = { suceess ->
                         if (suceess) {
@@ -115,6 +128,10 @@ fun LearningView(navController: NavController, numbers: List<Int>, locale: Local
                     text = "No more numbers", color = textColor, fontSize = textSize
                 )
             }
+            Spacer(modifier = Modifier.padding(24.dp))
+            ListenSpeedRateSelector(onSpeechRate = {
+                speedRate = it
+            })
         }
     }
 }
@@ -142,6 +159,82 @@ fun ListenButton(
             modifier = Modifier.scale(2.0f),
             contentDescription = "Start listening"
         )
+    }
+}
+
+@Composable
+fun ListenSpeedRateSelector(
+    onSpeechRate: (Float) -> Unit
+) {
+    val textSize = 24.sp
+    val cornerShape = RoundedCornerShape(24.dp)
+    val itemHeight = 40.dp//48.dp
+    val textHorizontalPadding = 12.dp
+    val backGroundColder = List_color_dark
+    val listSpeedRates = listOf(0.5f, 0.75f, 1.0f, 1.25f, 1.5f)
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth(fraction = 0.75f)
+            .padding(horizontal = 64.dp)
+            .wrapContentHeight(unbounded = true)
+    )
+    {
+        var isExtended by remember { mutableStateOf(false) }
+        var speedRate by remember { mutableFloatStateOf(1.0f) }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(itemHeight)
+                .background(
+                    color = backGroundColder,
+                    shape = cornerShape
+                )
+                .clickable {
+                    isExtended = !isExtended
+                },
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                modifier = Modifier.padding(horizontal = textHorizontalPadding),
+                text = speedRate.toString(),
+                fontSize = textSize
+            )
+            Icon(
+                modifier = Modifier.padding(end = textHorizontalPadding),
+                painter = painterResource(id = R.drawable.ic_list),
+                contentDescription = null
+            )
+        }
+
+        if (isExtended) {
+            for (rate in listSpeedRates) {
+                Spacer(modifier = Modifier.height(2.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            color = backGroundColder,
+                            shape = cornerShape
+                        )
+                        .height(itemHeight)
+                        .clickable {
+                            speedRate = rate
+                            onSpeechRate(rate)
+                            isExtended = !isExtended
+                        }) {
+                    Text(
+                        text = rate.toString(),
+                        modifier = Modifier
+                            .padding(horizontal = textHorizontalPadding)
+                            .align(alignment = Alignment.Center),
+                        fontSize = textSize,
+                    )
+                }
+            }
+        }
     }
 }
 
