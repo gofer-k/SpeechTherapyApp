@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -34,6 +35,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -67,6 +69,8 @@ fun LearningView(navController: NavController, numbers: List<Int>, locale: Local
     val sortedNumbers = numbers.sorted()
     val textRange = IntRange(sortedNumbers.first(), sortedNumbers.last()).toString()
     var speedRate by remember { mutableFloatStateOf(1.0f) }
+    var delayTime by remember { mutableLongStateOf(500) }
+    val ttsViewModel: TtsViewModel = TtsViewModel()
 
     Scaffold(
         topBar = {
@@ -83,6 +87,7 @@ fun LearningView(navController: NavController, numbers: List<Int>, locale: Local
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Purple40),
                 navigationIcon = {
                     IconButton(onClick = {
+                        ttsViewModel.stopSpeaking()
                         navController.popBackStack()
                     }) {
                         Icon(
@@ -116,7 +121,7 @@ fun LearningView(navController: NavController, numbers: List<Int>, locale: Local
                     context = ctx,
                     currentNumber,
                     locale, speedRate,
-                    ttsViewModel = TtsViewModel(),
+                    ttsViewModel = ttsViewModel,
                     onListenDone = { success ->
                         if (success) {
                             currentNumberIndex++
@@ -129,11 +134,30 @@ fun LearningView(navController: NavController, numbers: List<Int>, locale: Local
                 )
             }
             Spacer(modifier = Modifier.padding(24.dp))
-            PlaybackButton(numbers, locale, speedRate)
+            PlaybackButton(numbers, locale, speedRate, delayTime, ttsViewModel = ttsViewModel)
             Spacer(modifier = Modifier.padding(24.dp))
-            ListenSpeedRateSelector(onSpeechRate = {
-                speedRate = it
-            })
+            Row(modifier = Modifier.wrapContentWidth(unbounded = true)) {
+                // Speed rate selector
+                ListDownSelector(
+                    defaultValue = 1.0f,
+                    listItems = listOf(0.5f, 0.75f, 1.0f, 1.25f, 1.5f),
+                    onCallbackValue = {
+                        speedRate = it
+                    })
+                ListDownSelector(
+                    defaultValue = 500L, // delay in milliseconds
+                    listItems = listOf(
+                        500L,
+                        1000L,
+                        1500L,
+                        2000L,
+                        3000L,
+                        5000L
+                    ),  // speech delays list
+                    onCallbackValue = {
+                        delayTime = it
+                    })
+            }
         }
     }
 }
@@ -144,7 +168,7 @@ fun ListenButton(
     number: Int,
     locale: Locale,
     speechRate: Float,
-    ttsViewModel: TtsViewModel = TtsViewModel(),
+    ttsViewModel: TtsViewModel,
     onListenDone: ((Boolean) -> Unit)?
 ) {
     Button(
@@ -168,9 +192,9 @@ fun ListenButton(
 fun PlaybackButton(
     numbers: List<Int>,
     locale: Locale,
-    speechRate: Float,
-    ttsViewModel: TtsViewModel = TtsViewModel(),
-    delayMillis: Long = 1000,
+    speechRate: Float = 1.0f,
+    delayMillis: Long = 500,
+    ttsViewModel: TtsViewModel
 ) {
     val context = LocalContext.current
     var currentSpokenNumber by remember { mutableStateOf<Int?>(null) }
@@ -193,7 +217,7 @@ fun PlaybackButton(
                     currentSpokenNumber = number
                 })
         },
-        enabled = !isSpeaking
+        enabled = !isSpeaking,
     ) {
         Icon(
             painter = painterResource(id = R.drawable.playback_numbers_24),
@@ -203,19 +227,21 @@ fun PlaybackButton(
     }
     if (currentSpokenNumber != null) {
         Text(text = "Speaking: $currentSpokenNumber")
+        ttsViewModel.stopSpeaking()
     }
 }
 
 @Composable
-fun ListenSpeedRateSelector(
-    onSpeechRate: (Float) -> Unit
+fun <T> ListDownSelector(
+    defaultValue: T,
+    listItems: List<T>,
+    onCallbackValue: (T) -> Unit
 ) {
     val textSize = 24.sp
     val cornerShape = RoundedCornerShape(24.dp)
     val itemHeight = 40.dp//48.dp
     val textHorizontalPadding = 12.dp
     val backGroundColder = List_color_dark
-    val listSpeedRates = listOf(0.5f, 0.75f, 1.0f, 1.25f, 1.5f)
 
     Column(
         modifier = Modifier
@@ -225,7 +251,7 @@ fun ListenSpeedRateSelector(
     )
     {
         var isExtended by remember { mutableStateOf(false) }
-        var speedRate by remember { mutableFloatStateOf(1.0f) }
+        var selectedValue: T by remember { mutableStateOf(defaultValue) }
 
         Row(
             modifier = Modifier
@@ -243,7 +269,7 @@ fun ListenSpeedRateSelector(
         ) {
             Text(
                 modifier = Modifier.padding(horizontal = textHorizontalPadding),
-                text = speedRate.toString(),
+                text = selectedValue.toString(),
                 fontSize = textSize
             )
             Icon(
@@ -254,7 +280,7 @@ fun ListenSpeedRateSelector(
         }
 
         if (isExtended) {
-            for (rate in listSpeedRates) {
+            for (value in listItems) {
                 Spacer(modifier = Modifier.height(2.dp))
                 Box(
                     modifier = Modifier
@@ -265,12 +291,12 @@ fun ListenSpeedRateSelector(
                         )
                         .height(itemHeight)
                         .clickable {
-                            speedRate = rate
-                            onSpeechRate(rate)
+                            selectedValue = value
+                            onCallbackValue(value)
                             isExtended = !isExtended
                         }) {
                     Text(
-                        text = rate.toString(),
+                        text = value.toString(),
                         modifier = Modifier
                             .padding(horizontal = textHorizontalPadding)
                             .align(alignment = Alignment.Center),

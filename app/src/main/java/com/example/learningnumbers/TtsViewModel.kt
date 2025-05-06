@@ -106,6 +106,10 @@ class TtsViewModel : ViewModel() {
         }
     }
 
+    fun stopSpeaking() {
+        onCleared()
+    }
+
     // Release TextToSpeech resources when the ViewModel is cleared
     override fun onCleared() {
         super.onCleared()
