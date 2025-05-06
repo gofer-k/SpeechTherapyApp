@@ -114,11 +114,11 @@ fun LearningView(navController: NavController, numbers: List<Int>, locale: Local
                 Spacer(modifier = Modifier.padding(24.dp))
                 ListenButton(
                     context = ctx,
-                    currentNumber.toString(),
+                    currentNumber,
                     locale, speedRate,
                     ttsViewModel = TtsViewModel(),
-                    onListenDone = { suceess ->
-                        if (suceess) {
+                    onListenDone = { success ->
+                        if (success) {
                             currentNumberIndex++
                         }
                     })
@@ -128,6 +128,8 @@ fun LearningView(navController: NavController, numbers: List<Int>, locale: Local
                     text = "No more numbers", color = textColor, fontSize = textSize
                 )
             }
+            Spacer(modifier = Modifier.padding(24.dp))
+            PlaybackButton(numbers, locale, speedRate)
             Spacer(modifier = Modifier.padding(24.dp))
             ListenSpeedRateSelector(onSpeechRate = {
                 speedRate = it
@@ -139,26 +141,68 @@ fun LearningView(navController: NavController, numbers: List<Int>, locale: Local
 @Composable
 fun ListenButton(
     context: Context,
-    number: String,
+    number: Int,
     locale: Locale,
     speechRate: Float,
     ttsViewModel: TtsViewModel = TtsViewModel(),
-    onListenDone: (Boolean) -> Unit
+    onListenDone: ((Boolean) -> Unit)?
 ) {
     Button(
         modifier = Modifier
             .clip(CircleShape)
             .size(90.dp),
         onClick = {
-            ttsViewModel.onListenTrainingPhrase(
-                number, locale, speechRate, context,
-                onFinishedSpeech = { success -> onListenDone(success) })
+            ttsViewModel.onListenSinglePhrase(
+                number.toString(), locale, speechRate, context,
+                onFinishedSpeech = { success -> onListenDone?.invoke(success) })
         }) {
         Icon(
             painter = painterResource(id = R.drawable.listen_volume_up_24),
             modifier = Modifier.scale(2.0f),
             contentDescription = "Start listening"
         )
+    }
+}
+
+@Composable
+fun PlaybackButton(
+    numbers: List<Int>,
+    locale: Locale,
+    speechRate: Float,
+    ttsViewModel: TtsViewModel = TtsViewModel(),
+    delayMillis: Long = 1000,
+) {
+    val context = LocalContext.current
+    var currentSpokenNumber by remember { mutableStateOf<Int?>(null) }
+    var isSpeaking by remember { mutableStateOf(false) }
+
+    Button(
+        modifier = Modifier
+            .clip(CircleShape)
+            .size(90.dp),
+        onClick = {
+            isSpeaking = true
+            ttsViewModel.playNumbersSequence(
+                numbers, locale, speechRate, context, delayMillis,
+                onSequenceFinished = { success ->
+                    isSpeaking = success
+                    currentSpokenNumber = null
+                },
+                onNumberSpoken = { number, _ ->
+                    // Update UI with the number being spoken
+                    currentSpokenNumber = number
+                })
+        },
+        enabled = !isSpeaking
+    ) {
+        Icon(
+            painter = painterResource(id = R.drawable.playback_numbers_24),
+            modifier = Modifier.scale(2.0f),
+            contentDescription = "Start listening"
+        )
+    }
+    if (currentSpokenNumber != null) {
+        Text(text = "Speaking: $currentSpokenNumber")
     }
 }
 
