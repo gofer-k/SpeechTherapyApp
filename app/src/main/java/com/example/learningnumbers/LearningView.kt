@@ -7,7 +7,6 @@ import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -114,12 +113,16 @@ fun LearningView(navController: NavController, numbers: List<Int>, locale: Local
             val ctx = LocalContext.current
 
             Text(
-                modifier = Modifier.padding(top = 40.dp, bottom = 12.dp),
+                modifier = Modifier
+                    .padding(top = 40.dp, bottom = 12.dp)
+                    .align(Alignment.CenterHorizontally),
                 text = textRange, color = textColor, fontSize = textSize
             )
 
             if (enabledSpeak && currentNumber != null && currentNumberIndex < numbers.count()) {
-                Spacer(modifier = Modifier.padding(24.dp))
+                Spacer(modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 24.dp))
                 ListenButton(
                     context = ctx,
                     currentNumber,
@@ -137,25 +140,35 @@ fun LearningView(navController: NavController, numbers: List<Int>, locale: Local
                     color = textColor, fontSize = textSize
                 )
             }
-            Spacer(modifier = Modifier.padding(24.dp))
+            Spacer(modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 24.dp))
             PlaybackButton(
                 numbers, locale, speedRate, delayTime, ttsViewModel = ttsViewModel,
                 onPlaying = { it -> enabledSpeak = !it })
             if (enabledSpeak) {
-                Spacer(modifier = Modifier.padding(24.dp))
+                Spacer(modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 24.dp))
                 Row(
                     modifier = Modifier
+                        .fillMaxWidth()
                         .wrapContentWidth(unbounded = true)
-                        .focusable(enabledSpeak)
+                        .focusable(enabledSpeak),
                 ) {
                     // Speed rate selector
                     ListDownSelector(
+                        label = "Speak speed rate",
                         defaultValue = 1.0f,
                         listItems = listOf(0.5f, 0.75f, 1.0f, 1.25f, 1.5f),
                         onCallbackValue = {
                             speedRate = it
                         })
+                    Spacer(modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp))
                     ListDownSelector(
+                        label = "Delay speak [ms]",
                         defaultValue = 500L, // delay in milliseconds
                         listItems = listOf(
                             500L,
@@ -254,10 +267,12 @@ fun PlaybackButton(
 
 @Composable
 fun <T> ListDownSelector(
+    label: String,
     defaultValue: T,
     listItems: List<T>,
     onCallbackValue: (T) -> Unit
 ) {
+    val labelSize = 18.sp
     val textSize = 24.sp
     val cornerShape = RoundedCornerShape(24.dp)
     val itemHeight = 40.dp//48.dp
@@ -267,13 +282,13 @@ fun <T> ListDownSelector(
     Column(
         modifier = Modifier
             .fillMaxWidth(fraction = 0.75f)
-            .padding(horizontal = 64.dp)
-            .wrapContentHeight(unbounded = true)
+            .wrapContentHeight(unbounded = true),
+        horizontalAlignment = Alignment.CenterHorizontally
     )
     {
         var isExtended by remember { mutableStateOf(false) }
         var selectedValue: T by remember { mutableStateOf(defaultValue) }
-
+        Text(text = label, fontSize = labelSize)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -286,7 +301,7 @@ fun <T> ListDownSelector(
                     isExtended = !isExtended
                 },
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+//            horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
                 modifier = Modifier.padding(horizontal = textHorizontalPadding),
