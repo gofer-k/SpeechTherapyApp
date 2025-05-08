@@ -35,15 +35,15 @@ class TtsViewModel : ViewModel() {
         }
     }
 
-    fun onListenSinglePhrase(
+    fun listenSinglePhrase(
         number: String,
         locale: Locale,
-        speechRate: Float, context: Context,
+        context: Context,
         onFinishedSpeech: ((Boolean) -> Unit)? = null
     ) {
         initializeTts(context, locale)
         _state.value = number
-        tts?.setSpeechRate(speechRate)
+        tts?.setSpeechRate(1.0f)
         val result = tts?.speak(
             _state.value,
             TextToSpeech.QUEUE_FLUSH,

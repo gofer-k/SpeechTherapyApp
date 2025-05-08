@@ -6,7 +6,7 @@ import android.content.Context
 import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,7 +23,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -55,10 +54,13 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.learningnumbers.ui.theme.BackGroundGradientEnd
 import com.example.learningnumbers.ui.theme.BackGroundGradientStart
+import com.example.learningnumbers.ui.theme.Button_color_disabled
+import com.example.learningnumbers.ui.theme.Button_color_enabled
 import com.example.learningnumbers.ui.theme.List_color_dark
 import com.example.learningnumbers.ui.theme.Purple40
 import java.util.Locale
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LearningView(navController: NavController, numbers: List<Int>, locale: Locale) {
     var topBarHeight by remember { mutableIntStateOf(0) }
@@ -70,7 +72,8 @@ fun LearningView(navController: NavController, numbers: List<Int>, locale: Local
     val textRange = IntRange(sortedNumbers.first(), sortedNumbers.last()).toString()
     var speedRate by remember { mutableFloatStateOf(1.0f) }
     var delayTime by remember { mutableLongStateOf(500) }
-    val ttsViewModel: TtsViewModel = TtsViewModel()
+    var enabledSpeak by remember { mutableStateOf(true) }
+    val ttsViewModel = TtsViewModel()
 
     Scaffold(
         topBar = {
@@ -81,7 +84,7 @@ fun LearningView(navController: NavController, numbers: List<Int>, locale: Local
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Center,
                         text = "Learning View",
-                        color = if (isSystemInDarkTheme()) Color.White else Color.Black
+                        color = Color.White
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Purple40),
@@ -93,7 +96,7 @@ fun LearningView(navController: NavController, numbers: List<Int>, locale: Local
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = null,
-                            tint = if (isSystemInDarkTheme()) Color.White else Color.Black
+                            tint = Color.White
                         )
                     }
                 })
@@ -115,12 +118,12 @@ fun LearningView(navController: NavController, numbers: List<Int>, locale: Local
                 text = textRange, color = textColor, fontSize = textSize
             )
 
-            if (currentNumber != null && currentNumberIndex < numbers.count()) {
+            if (enabledSpeak && currentNumber != null && currentNumberIndex < numbers.count()) {
                 Spacer(modifier = Modifier.padding(24.dp))
                 ListenButton(
                     context = ctx,
                     currentNumber,
-                    locale, speedRate,
+                    locale,
                     ttsViewModel = ttsViewModel,
                     onListenDone = { success ->
                         if (success) {
@@ -130,33 +133,42 @@ fun LearningView(navController: NavController, numbers: List<Int>, locale: Local
             } else {
                 Text(
                     modifier = Modifier.padding(top = 40.dp, bottom = 12.dp),
-                    text = "No more numbers", color = textColor, fontSize = textSize
+                    text = if (enabledSpeak) "No more numbers" else "Playback speaking",
+                    color = textColor, fontSize = textSize
                 )
             }
             Spacer(modifier = Modifier.padding(24.dp))
-            PlaybackButton(numbers, locale, speedRate, delayTime, ttsViewModel = ttsViewModel)
-            Spacer(modifier = Modifier.padding(24.dp))
-            Row(modifier = Modifier.wrapContentWidth(unbounded = true)) {
-                // Speed rate selector
-                ListDownSelector(
-                    defaultValue = 1.0f,
-                    listItems = listOf(0.5f, 0.75f, 1.0f, 1.25f, 1.5f),
-                    onCallbackValue = {
-                        speedRate = it
-                    })
-                ListDownSelector(
-                    defaultValue = 500L, // delay in milliseconds
-                    listItems = listOf(
-                        500L,
-                        1000L,
-                        1500L,
-                        2000L,
-                        3000L,
-                        5000L
-                    ),  // speech delays list
-                    onCallbackValue = {
-                        delayTime = it
-                    })
+            PlaybackButton(
+                numbers, locale, speedRate, delayTime, ttsViewModel = ttsViewModel,
+                onPlaying = { it -> enabledSpeak = !it })
+            if (enabledSpeak) {
+                Spacer(modifier = Modifier.padding(24.dp))
+                Row(
+                    modifier = Modifier
+                        .wrapContentWidth(unbounded = true)
+                        .focusable(enabledSpeak)
+                ) {
+                    // Speed rate selector
+                    ListDownSelector(
+                        defaultValue = 1.0f,
+                        listItems = listOf(0.5f, 0.75f, 1.0f, 1.25f, 1.5f),
+                        onCallbackValue = {
+                            speedRate = it
+                        })
+                    ListDownSelector(
+                        defaultValue = 500L, // delay in milliseconds
+                        listItems = listOf(
+                            500L,
+                            1000L,
+                            1500L,
+                            2000L,
+                            3000L,
+                            5000L
+                        ),  // speech delays list
+                        onCallbackValue = {
+                            delayTime = it
+                        })
+                }
             }
         }
     }
@@ -167,22 +179,23 @@ fun ListenButton(
     context: Context,
     number: Int,
     locale: Locale,
-    speechRate: Float,
     ttsViewModel: TtsViewModel,
     onListenDone: ((Boolean) -> Unit)?
 ) {
-    Button(
+    IconButton(
         modifier = Modifier
             .clip(CircleShape)
             .size(90.dp),
         onClick = {
-            ttsViewModel.onListenSinglePhrase(
-                number.toString(), locale, speechRate, context,
+            ttsViewModel.listenSinglePhrase(
+                number.toString(), locale, context,
                 onFinishedSpeech = { success -> onListenDone?.invoke(success) })
         }) {
         Icon(
-            painter = painterResource(id = R.drawable.listen_volume_up_24),
-            modifier = Modifier.scale(2.0f),
+            painter = painterResource(id = R.drawable.playback_numbers_24),
+            modifier = Modifier
+                .scale(4.0f)
+                .background(color = Button_color_enabled),
             contentDescription = "Start listening"
         )
     }
@@ -194,22 +207,23 @@ fun PlaybackButton(
     locale: Locale,
     speechRate: Float = 1.0f,
     delayMillis: Long = 500,
-    ttsViewModel: TtsViewModel
+    ttsViewModel: TtsViewModel,
+    onPlaying: ((Boolean) -> Unit)?,
 ) {
     val context = LocalContext.current
     var currentSpokenNumber by remember { mutableStateOf<Int?>(null) }
-    var isSpeaking by remember { mutableStateOf(false) }
+    var isPlaying by remember { mutableStateOf(false) }
 
-    Button(
+    IconButton(
         modifier = Modifier
             .clip(CircleShape)
             .size(90.dp),
         onClick = {
-            isSpeaking = true
+            isPlaying = true
             ttsViewModel.playNumbersSequence(
                 numbers, locale, speechRate, context, delayMillis,
                 onSequenceFinished = { success ->
-                    isSpeaking = success
+                    isPlaying = success
                     currentSpokenNumber = null
                 },
                 onNumberSpoken = { number, _ ->
@@ -217,17 +231,24 @@ fun PlaybackButton(
                     currentSpokenNumber = number
                 })
         },
-        enabled = !isSpeaking,
+        enabled = !isPlaying
     ) {
         Icon(
             painter = painterResource(id = R.drawable.playback_numbers_24),
-            modifier = Modifier.scale(2.0f),
+            modifier = Modifier
+                .scale(4.0f)
+                .background(color = if (isPlaying) Button_color_disabled else Button_color_enabled),
             contentDescription = "Start listening"
         )
+        if (isPlaying) {
+            onPlaying?.invoke(true)
+        }
     }
     if (currentSpokenNumber != null) {
         Text(text = "Speaking: $currentSpokenNumber")
-        ttsViewModel.stopSpeaking()
+    } else {
+        onPlaying?.invoke(false)
+        isPlaying = false
     }
 }
 
@@ -308,7 +329,7 @@ fun <T> ListDownSelector(
     }
 }
 
-@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 fun LearningViewPreview() {
     LearningView(
