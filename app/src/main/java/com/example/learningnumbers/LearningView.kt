@@ -301,12 +301,12 @@ fun <T> ListDownSelector(
                     isExtended = !isExtended
                 },
             verticalAlignment = Alignment.CenterVertically,
-//            horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
                 modifier = Modifier.padding(horizontal = textHorizontalPadding),
                 text = selectedValue.toString(),
-                fontSize = textSize
+                fontSize = textSize,
+                color = Color.Black
             )
             Icon(
                 modifier = Modifier.padding(end = textHorizontalPadding),

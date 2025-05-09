@@ -10,7 +10,7 @@ class MainViewModel : ViewModel() {
         _selectedLanguage.value = lang
     }
 
-    fun updatedNumbersRange(range: IntRange) {
+    fun updatedNumbersRange(range: IntProgression) {
         _selectedNumbersRange.value = range
     }
 
@@ -33,12 +33,12 @@ class MainViewModel : ViewModel() {
 
     val languages = listOf(
         Language("English", Locale("en")),
-        Language("polish", Locale("pl"))
+        Language("Polish", Locale("pl"))
     )
 
-    val defaultNumbersRange = 0..100
-    private val _selectedNumbersRange = MutableLiveData<IntRange>(defaultNumbersRange)
-    val selectedNumbersRange: LiveData<IntRange> = _selectedNumbersRange
+    val defaultNumbersRange = 0..100 step 1
+    private val _selectedNumbersRange = MutableLiveData<IntProgression>(defaultNumbersRange)
+    val selectedNumbersRange: LiveData<IntProgression> = _selectedNumbersRange
 
     private val _randomized = MutableLiveData<Boolean>(false)
     val randomized: LiveData<Boolean> = _randomized
@@ -48,8 +48,13 @@ class MainViewModel : ViewModel() {
         0..100,
         0..1000,
         0..10000,
-        10..100,
-        100..1000,
-        1000..10000
+        0..100000,
+        0..1000000,
+        10..100 step 10,
+        100..1000 step 100,
+        1000..10000 step 1000,
+        10000..100000 step 10000,
+        100000..1000000 step 100000,
+        1000000..10000000 step 1000000
     )
 }

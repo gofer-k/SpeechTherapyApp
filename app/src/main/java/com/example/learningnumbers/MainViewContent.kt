@@ -84,7 +84,8 @@ fun MainViewContent(
                 onSelectedLanguage = { viewModel.updatedLanguage(it) })
             Spacer(modifier = Modifier.padding(spacer))
             NumbersRangeSelector(
-                viewModel.numbersRanges, viewModel.selectedNumbersRange,
+                numbersRange = viewModel.numbersRanges,
+                selectedNumbersRange = viewModel.selectedNumbersRange,
                 onNumbersRange = { viewModel.updatedNumbersRange(it) })
             Spacer(modifier = Modifier.padding(spacer))
             CheckboxWithLabel(onRandomize = {
@@ -139,9 +140,9 @@ fun CheckboxWithLabel(onRandomize: ((Boolean) -> Unit)? = null) {
 
 @Composable
 fun NumbersRangeSelector(
-    numbersRange: List<IntRange>,
-    selectedNumbersRange: LiveData<IntRange>,
-    onNumbersRange: (IntRange) -> Unit
+    numbersRange: List<IntProgression>,
+    selectedNumbersRange: LiveData<IntProgression>,
+    onNumbersRange: (IntProgression) -> Unit
 ) {
     val textSize = 20.sp
     val cornerShape = RoundedCornerShape(24.dp)
@@ -158,9 +159,7 @@ fun NumbersRangeSelector(
     {
         var isExtended by remember { mutableStateOf(false) }
         var uiSelectedNumbersRange by remember {
-            mutableStateOf(
-                selectedNumbersRange.value ?: (0..100)
-            )
+            mutableStateOf(selectedNumbersRange.value)
         }
 
         Row(
@@ -179,7 +178,7 @@ fun NumbersRangeSelector(
         ) {
             Text(
                 modifier = Modifier.padding(horizontal = textHorizontalPadding),
-                text = uiSelectedNumbersRange.toString(),
+                text = formatRangeWithoutStep(uiSelectedNumbersRange),
                 fontSize = textSize
             )
             Icon(
@@ -190,7 +189,7 @@ fun NumbersRangeSelector(
         }
 
         if (isExtended) {
-            for (range in numbersRange) {
+            for (progress in numbersRange) {
                 Spacer(modifier = Modifier.height(2.dp))
                 Box(
                     modifier = Modifier
@@ -201,12 +200,12 @@ fun NumbersRangeSelector(
                         )
                         .height(itemHeight)
                         .clickable {
-                            uiSelectedNumbersRange = range
-                            onNumbersRange(range)
+                            uiSelectedNumbersRange = progress
+                            onNumbersRange(progress)
                             isExtended = !isExtended
                         }) {
                     Text(
-                        text = range.toString(),
+                        text = formatRangeWithoutStep(progress),
                         modifier = Modifier
                             .padding(horizontal = textHorizontalPadding)
                             .align(alignment = Alignment.Center),
@@ -293,6 +292,16 @@ fun LanguageSelector(
                 }
             }
         }
+    }
+}
+
+fun formatRangeWithoutStep(progression: IntProgression?): String {
+    // Note: This doesn't reflect whether it was originally .. or until or downTo.
+    // It just shows the first and last elements.
+    return if (progression != null) {
+        "${progression.first} .. ${progression.last}"
+    } else {
+        return "wrong range"
     }
 }
 
