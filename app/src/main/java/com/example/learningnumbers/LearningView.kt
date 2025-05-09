@@ -2,7 +2,6 @@
 
 package com.example.learningnumbers
 
-import android.content.Context
 import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -30,6 +29,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -72,7 +72,7 @@ fun LearningView(navController: NavController, numbers: List<Int>, locale: Local
     var speedRate by remember { mutableFloatStateOf(1.0f) }
     var delayTime by remember { mutableLongStateOf(500) }
     var enabledSpeak by remember { mutableStateOf(true) }
-    val ttsViewModel = TtsViewModel()
+    val ttsViewModel = TtsViewModel(LocalContext.current, locale)
 
     Scaffold(
         topBar = {
@@ -110,8 +110,6 @@ fun LearningView(navController: NavController, numbers: List<Int>, locale: Local
                 .padding(contentPadding),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            val ctx = LocalContext.current
-
             Text(
                 modifier = Modifier
                     .padding(top = 40.dp, bottom = 12.dp)
@@ -124,9 +122,7 @@ fun LearningView(navController: NavController, numbers: List<Int>, locale: Local
                     .fillMaxWidth()
                     .padding(vertical = 24.dp))
                 ListenButton(
-                    context = ctx,
                     currentNumber,
-                    locale,
                     ttsViewModel = ttsViewModel,
                     onListenDone = { success ->
                         if (success) {
@@ -144,8 +140,8 @@ fun LearningView(navController: NavController, numbers: List<Int>, locale: Local
                 .fillMaxWidth()
                 .padding(vertical = 24.dp))
             PlaybackButton(
-                numbers, locale, speedRate, delayTime, ttsViewModel = ttsViewModel,
-                onPlaying = { it -> enabledSpeak = !it })
+                numbers, speedRate, delayTime, ttsViewModel = ttsViewModel,
+                onPlaying = { enabledSpeak = !it })
             if (enabledSpeak) {
                 Spacer(modifier = Modifier
                     .fillMaxWidth()
@@ -189,21 +185,22 @@ fun LearningView(navController: NavController, numbers: List<Int>, locale: Local
 
 @Composable
 fun ListenButton(
-    context: Context,
     number: Int,
-    locale: Locale,
     ttsViewModel: TtsViewModel,
     onListenDone: ((Boolean) -> Unit)?
 ) {
+    val isTtsInitialized by ttsViewModel.isTtsInitialized.collectAsState()
     IconButton(
         modifier = Modifier
             .clip(CircleShape)
             .size(90.dp),
         onClick = {
             ttsViewModel.listenSinglePhrase(
-                number.toString(), locale, context,
+                number.toString(),
                 onFinishedSpeech = { success -> onListenDone?.invoke(success) })
-        }) {
+        },
+        enabled = isTtsInitialized
+    ) {
         Icon(
             painter = painterResource(id = R.drawable.playback_numbers_24),
             modifier = Modifier
@@ -217,13 +214,11 @@ fun ListenButton(
 @Composable
 fun PlaybackButton(
     numbers: List<Int>,
-    locale: Locale,
     speechRate: Float = 1.0f,
     delayMillis: Long = 500,
     ttsViewModel: TtsViewModel,
     onPlaying: ((Boolean) -> Unit)?,
 ) {
-    val context = LocalContext.current
     var currentSpokenNumber by remember { mutableStateOf<Int?>(null) }
     var isPlaying by remember { mutableStateOf(false) }
 
@@ -234,7 +229,7 @@ fun PlaybackButton(
         onClick = {
             isPlaying = true
             ttsViewModel.playNumbersSequence(
-                numbers, locale, speechRate, context, delayMillis,
+                numbers, speechRate, delayMillis,
                 onSequenceFinished = { success ->
                     isPlaying = success
                     currentSpokenNumber = null
@@ -288,7 +283,7 @@ fun <T> ListDownSelector(
     {
         var isExtended by remember { mutableStateOf(false) }
         var selectedValue: T by remember { mutableStateOf(defaultValue) }
-        Text(text = label, fontSize = labelSize)
+        Text(text = label, fontSize = labelSize, color = Color.Black)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -306,7 +301,6 @@ fun <T> ListDownSelector(
                 modifier = Modifier.padding(horizontal = textHorizontalPadding),
                 text = selectedValue.toString(),
                 fontSize = textSize,
-                color = Color.Black
             )
             Icon(
                 modifier = Modifier.padding(end = textHorizontalPadding),

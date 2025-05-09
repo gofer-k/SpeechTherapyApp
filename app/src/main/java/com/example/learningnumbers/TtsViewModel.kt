@@ -3,17 +3,24 @@ package com.example.learningnumbers
 import android.content.Context
 import android.speech.tts.TextToSpeech
 import android.util.Log
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.util.Locale
 
-class TtsViewModel : ViewModel() {
+class TtsViewModel(context: Context, locale: Locale) : ViewModel() {
     private var tts: TextToSpeech? = null
-    private val _state = mutableStateOf("")
 
+    private val _isTtsInitialized = MutableStateFlow(false)
+    val isTtsInitialized: StateFlow<Boolean> = _isTtsInitialized.asStateFlow()
+
+    init {
+        initializeTts(context, locale)
+    }
     // Function to initialize TextToSpeech
     private fun initializeTts(context: Context, locale: Locale) {
         if (tts == null) {
@@ -23,10 +30,14 @@ class TtsViewModel : ViewModel() {
                     if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
                         Log.e("TTS", "Language not supported")
                         // Handle unsupported language, perhaps inform the user
+                        _isTtsInitialized.value = false
+                    } else {
+                        _isTtsInitialized.value = true
                     }
                 } else {
                     Log.e("TTS", "Initialization failed")
                     // Handle TTS initialization failure
+                    _isTtsInitialized.value = false
                 }
             }
         } else {
@@ -37,37 +48,34 @@ class TtsViewModel : ViewModel() {
 
     fun listenSinglePhrase(
         number: String,
-        locale: Locale,
-        context: Context,
         onFinishedSpeech: ((Boolean) -> Unit)? = null
     ) {
-        initializeTts(context, locale)
-        _state.value = number
-        tts?.setSpeechRate(1.0f)
-        val result = tts?.speak(
-            _state.value,
-            TextToSpeech.QUEUE_FLUSH,
-            null,
-            null
-        )
-        if (result == TextToSpeech.SUCCESS) {
-            onFinishedSpeech?.invoke(true)
-        } else {
-            onFinishedSpeech?.invoke(false)
+        viewModelScope.launch {
+            if (!_isTtsInitialized.value) {
+                return@launch
+            }
+            tts?.setSpeechRate(1.0f)
+            val result = tts?.speak(
+                number,
+                TextToSpeech.QUEUE_FLUSH,
+                null,
+                null
+            )
+            onFinishedSpeech?.invoke(result == TextToSpeech.SUCCESS)
         }
     }
 
     fun playNumbersSequence(
         numbers: List<Int>,
-        locale: Locale,
         speechRate: Float,
-        context: Context,
         delayMillis: Long = 1000, // Default delay of 1 second
         onSequenceFinished: ((Boolean) -> Unit)? = null,
         onNumberSpoken: ((Int, Boolean) -> Unit)? = null // Callback for each number
     ) {
         viewModelScope.launch {
-            initializeTts(context, locale) // Ensure TTS is initialized
+            if (!_isTtsInitialized.value) {
+                return@launch
+            }
             tts?.setSpeechRate(speechRate)
 
             var allSuccessful = true
