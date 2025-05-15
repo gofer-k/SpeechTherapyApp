@@ -1,13 +1,16 @@
-Mobile application for Android platfrom for speech tarapy.
+Speech Therapy Android App
 
-  GoalS:
-1. Improve skiil for listening and understanding numbers.
+A mobile application for the Android platform designed to support speech therapy.
 
-  Features:
-1. Listen a single nunber from choosen a numbers range.
-2. Playback a choosen collection numbers range.
-3. Choose a predfidened list of number ranges
-4. Choose continuous or random a collection of numbers range for learning
+Goals
+1. Improve listening skills and comprehension of spoken numbers.
 
-   Caveatios:
-1. 
+Features
+1. Listen to a single number from a selected range.
+2. Play back a collection of numbers from a chosen range.
+3. Select from predefined lists of number ranges.
+4. Choose between continuous or random playback of number ranges for learning.
+
+Caveats
+1. The application currently supports English and Polish languages.
+2. It relies on the Google Text-to-Speech service, which must be available on the device.
