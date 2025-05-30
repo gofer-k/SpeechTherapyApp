@@ -1,5 +1,6 @@
 package com.example.learningnumbers
 
+import android.util.Log
 import androidx.activity.result.launch
 import androidx.compose.animation.core.copy
 import androidx.lifecycle.ViewModel
@@ -9,6 +10,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.YearMonth
+import kotlin.random.Random
 
 data class DateRange(val start: LocalDate? = null, val end: LocalDate? = null) {
     val isSelected: Boolean
@@ -108,8 +111,58 @@ class ViewModelDates : ViewModel(){
                 !currentRange.start.isAfter(currentRange.end)
     }
 
-    fun getDates(): List<LocalDate> {
-        // TODO:
-        return listOf()
+    fun getDates(randomYears: Boolean, randomMonths: Boolean, randomDays: Boolean): List<LocalDate> {
+        val baseRange = _selectedDateRange.value.start ?: return emptyList()
+
+        val targetYear = if (randomYears) {
+            // Random year within +/- 5 years of the base year
+            // Ensure it stays within a reasonable range (e.g., 1970-2099)
+            val yearOffset = Random.nextInt(-5, 6) // TODO: configure years range
+            (baseRange.year + yearOffset).coerceIn(1970, 2099)
+        } else {
+            baseRange.year
+        }
+
+        val targetMonth = if (randomMonths) {
+            // Random month within the base month range
+            Random.nextInt(1, 13) // month range [1, 12)
+        } else {
+            baseRange.month.value
+        }
+
+        // Determine the number of days in the target month and year
+        val yearMonth = YearMonth.of(targetYear, targetMonth)
+        val daysInMonth = yearMonth.lengthOfMonth()
+
+        val generatedDates = mutableListOf<LocalDate>()
+
+        if (randomDays) {
+            val noOfDaysToRandom = Random.nextInt(1, daysInMonth)   // al days of a month
+            val selectedRandomDays = mutableSetOf<Int>()    // to ensure unique random days
+
+            // Generate unique days within the target month and year
+            while (selectedRandomDays.size < noOfDaysToRandom) {
+                selectedRandomDays.add(Random.nextInt(1, daysInMonth + 1))
+            }
+            for (day in selectedRandomDays) {
+                try {
+                    generatedDates.add(LocalDate.of(targetYear, targetMonth, day))
+                } catch (e: Exception) {
+                    Log.e("ViewModelDates", "Error creating date: $targetYear-$targetMonth-$day", e)
+                    return listOf()
+                }
+            }
+        } else {
+            // If not randomizing days, use the day from the baseStartDate,
+            // but ensure it's valid for the potentially randomized targetMonth and targetYear.
+            val dayToUse = baseRange.dayOfMonth.coerceAtMost(daysInMonth)
+            try {
+                generatedDates.add(LocalDate.of(targetYear, targetMonth, dayToUse))
+            } catch (e: Exception) {
+                Log.e("ViewModelDates", "Error creating date: $targetYear-$targetMonth-$dayToUse", e)
+                return listOf()
+            }
+        }
+        return generatedDates.toList()
     }
 }
