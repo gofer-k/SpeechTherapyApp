@@ -14,7 +14,7 @@ class MainViewModel : ViewModel() {
         _selectedNumbersRange.value = range
     }
 
-    fun updateRandimizeNumbers(random: Boolean) {
+    fun updateRandomizeNumbers(random: Boolean) {
         _randomized.value = random
     }
 

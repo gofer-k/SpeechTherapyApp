@@ -89,7 +89,7 @@ fun MainViewContent(
                 onNumbersRange = { viewModel.updatedNumbersRange(it) })
             Spacer(modifier = Modifier.padding(spacer))
             CheckboxWithLabel(onRandomize = {
-                viewModel.updateRandimizeNumbers(it)
+                viewModel.updateRandomizeNumbers(it)
             })
             Spacer(modifier = Modifier.padding(spacer * 4))
             Button(
