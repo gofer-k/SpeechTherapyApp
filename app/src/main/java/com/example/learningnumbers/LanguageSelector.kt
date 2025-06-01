@@ -50,7 +50,7 @@ fun LanguageSelector(
     )
     {
         var isExtended by remember { mutableStateOf(false) }
-        var uiSelectedLanguage by remember { mutableStateOf(language.value ?: Language()) }
+        var uiSelectedLanguage by remember { mutableStateOf(language.value) }
 
         Row(
             modifier = Modifier

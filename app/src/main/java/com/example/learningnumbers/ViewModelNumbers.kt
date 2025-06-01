@@ -2,19 +2,6 @@ package com.example.learningnumbers
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlin.random.Random
-
-// Data specific to numbers learning
-data class NumbersLearningState(
-    val currentNumber: Int? = null,
-    val displayedNumbers: List<Int> = emptyList(),
-    val maxNumber: Int = 10, // Max number for generation
-    val count: Int = 1 // How many numbers to generate/display
-)
 
 class ViewModelNumbers : BaseViewModel() {
     val defaultNumbersRange = 0..100 step 1

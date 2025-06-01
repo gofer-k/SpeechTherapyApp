@@ -1,6 +1,5 @@
 package com.example.learningnumbers
 
-import androidx.compose.animation.core.copy
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,18 +18,9 @@ open class BaseViewModel : ViewModel() {
     private val _availableLanguages = MutableStateFlow(
         listOf(Language.ENGLISH, Language.POLISH)
     )
-    val availableLanguages: StateFlow<List<Language>> = _availableLanguages.asStateFlow()
 
     private val _selectedLanguage = MutableStateFlow(Language.ENGLISH) // Default selected language
     val selectedLanguage: StateFlow<Language> = _selectedLanguage.asStateFlow()
-
-    open fun setAvailableLanguages(languages: List<Language>) {
-        _availableLanguages.value = languages
-        // Optionally, ensure the selected language is still valid or reset it
-        if (languages.isNotEmpty() && !_selectedLanguage.value.code.equals(languages.first().code, ignoreCase = true) && !languages.contains(_selectedLanguage.value)) {
-            _selectedLanguage.value = languages.first()
-        }
-    }
 
     fun availableLanguages(): List<Language> {
         return _availableLanguages.value
