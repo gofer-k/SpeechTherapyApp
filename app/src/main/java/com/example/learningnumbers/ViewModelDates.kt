@@ -1,9 +1,6 @@
 package com.example.learningnumbers
 
 import android.util.Log
-import androidx.activity.result.launch
-import androidx.compose.animation.core.copy
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,7 +15,7 @@ data class DateRange(val start: LocalDate? = null, val end: LocalDate? = null) {
         get() = start != null && end != null
 }
 
-class ViewModelDates : ViewModel(){
+class ViewModelDates : BaseViewModel(){
     private val _selectedDateRange = MutableStateFlow(DateRange())
     val selectedDateRange: StateFlow<DateRange> = _selectedDateRange
 

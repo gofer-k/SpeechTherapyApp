@@ -5,7 +5,8 @@ import android.os.Parcelable
 import java.util.Locale
 
 
-data class Language(val label: String = "", val locale: Locale = Locale.US) : Parcelable {
+data class Language(val label: String = "English", val locale: Locale = Locale.US, val code: String = "us") : Parcelable {
+
     override fun describeContents(): Int = 0
 
     override fun writeToParcel(dest: Parcel, flags: Int) {
@@ -14,6 +15,9 @@ data class Language(val label: String = "", val locale: Locale = Locale.US) : Pa
     }
 
     companion object CREATOR : Parcelable.Creator<Language> {
+        val ENGLISH = Language("English", Locale.US, code = "us")
+        val POLISH = Language("Polish", Locale("pl"), code = "pl")
+
         override fun createFromParcel(parcel: Parcel): Language {
             val label = parcel.readString() ?: ""
             val locale = parcel.readParcelable(

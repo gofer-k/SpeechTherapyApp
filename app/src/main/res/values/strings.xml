@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">LearningNumbers</string>
-    <string name="titleMainView">Multilingual Numbers</string>"
+    <string name="titleConfigLearningNumbersView">Multilingual numbers</string>"
+    <string name="titleConfigLearningDatesView">Multilingual dates</string>"
 </resources>

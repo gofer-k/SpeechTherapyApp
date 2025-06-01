@@ -61,7 +61,7 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LearningView(navController: NavController, numbers: List<Int>, locale: Locale) {
+fun ListeningNumbersView(navController: NavController, numbers: List<Int>, locale: Locale) {
     var topBarHeight by remember { mutableIntStateOf(0) }
     val textColor = Color.Black
     val textSize = 24.sp
@@ -340,8 +340,8 @@ fun <T> ListDownSelector(
 
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
-fun LearningViewPreview() {
-    LearningView(
+fun ListeningNumbersViewPreview() {
+    ListeningNumbersView(
         navController = NavController(LocalContext.current),
         numbers = (0..100).toList(),
         locale = Locale.US
